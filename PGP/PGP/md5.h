@@ -5,7 +5,7 @@
 * PGP: Pretty Good Privacy
 * Author: korkeep (Sungsu Kim)
 * Student ID: 2016104109
-* md5.h: I manually changed origin source code(md5.h, md5.c) ecause it would be cleaner if I partially modified the existing source code.
+* md5.h: I manually changed origin source code(md5.h, md5.c) because it would be cleaner if I partially modified the source code.
 */
 
 #include <stdio.h>
@@ -426,13 +426,3 @@ static void MDPrint(unsigned char digest[16])
     for (i = 0; i < 16; i++)
         printf("%02x", digest[i]);
 }
-
-/*
-main()
-{
-    char a[100] = "testing123";
-
-    MDString(a);
-    printf("\n");
-    MDFile("a.txt");
-}*/
