@@ -147,7 +147,33 @@ int main() {
 	//Encrypt SDES Key with Receiver's Public Key
 	printf("Encrypted SDES Key (Key1 + Key2): ");
 	Key_RSAEncrypt(SDES_KEY_LEN); 
+	printf("\n");
 
+	//Step 7: Concat Encrypted Data & Encrypted Symmetric Key
+	printf("# Step 7: Concat Encrypted Data & Encrypted Symmetric Key\n");
+	for (int idx = 0; idx < MAX_LEN; idx++) {
+		if (text[idx] == NULL) {
+			//Concat Encrypted Key1
+			for (int i = 0; i < 8; i++) {
+				sdes_text[idx][i] = en_Key[i];
+				printf("%d", sdes_text[idx][i]);
+			}
+			printf(" ");
+			//Concat Encrypted Key2
+			for (int i = 8; i < 16; i++) {
+				sdes_text[idx + 1][i - 8] = en_Key[i];
+				printf("%d", sdes_text[idx + 1][i - 8]);
+			}
+			break;
+		}
+		else {
+			for (i = 0; i < 8; i++) {
+				printf("%d", sdes_text[idx][i]);
+			}
+			printf(" ");
+		}
+	}
+	printf("\n\n");
 
 
 
