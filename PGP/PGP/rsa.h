@@ -13,19 +13,24 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include "sdes.h"
 
 #define MAC_LEN 17 //MAC Length = 16(Digest Length) + 1(Flag)
+#define KEY_LEN 17 //KEY Length = 8*2(2 Key Length ) + 1(Flag)
 
 /* Global Variable */
 long int p, q, n, t, flag, i, j, k;
-long int e[100], d[100], temp[100]; //Key List
-char de[MAC_LEN], en[MAC_LEN]; //Data
+long int e[100], d[100], temp_MAC[100], temp_Key[100]; //Key List
+char de_MAC[MAC_LEN], en_MAC[MAC_LEN]; //MAC Data
+int de_Key[KEY_LEN], en_Key[KEY_LEN]; //Key Data
 
 int isPrime(long int); /* Check if input is Prime */
 void calc_E(); /* Calculate E */
 long int calc_D(long int); /* Calculate D */
-void RSAEncrypt(int); /* RSA Encryption */
-void RSADecrypt(); /* RSA Decryption */
+void MAC_RSAEncrypt(int); /* MAC RSA Encryption */
+void MAC_RSADecrypt(); /* MAC RSA Decryption */
+void Key_RSAEncrypt(int); /* Key RSA Encryption */
+void Key_RSADecrypt(); /* Key RSA Decryption */
 
 /* Check if input is Prime */
 int isPrime(long int pr)
@@ -76,14 +81,15 @@ long int calc_D(long int x)
     }
 }
 
-/* RSA Encryption */
-void RSAEncrypt(int len)
+/* MAC RSA Encryption */
+void MAC_RSAEncrypt(int len)
 {
+    //Encrypt Digest with Sender's Private Key
     long int pt, ct, key = e[0];
     i = 0;
     while (i != len)
     {
-        pt = de[i];
+        pt = de_MAC[i];
         pt = pt - 96;
         k = 1;
         for (j = 0; j < key; j++)
@@ -91,23 +97,23 @@ void RSAEncrypt(int len)
             k = k * pt;
             k = k % n;
         }
-        temp[i] = k;
+        temp_MAC[i] = k;
         ct = k + 96;
-        en[i] = ct;
+        en_MAC[i] = ct;
         i++;
     }
-    en[i] = -1;
-    MDPrint(en);
+    en_MAC[i] = -1;
+    MDPrint(en_MAC);
 }
-
-/* RSA Decryption */
-void RSADecrypt()
+/* MAC RSA Decryption */
+void MAC_RSADecrypt()
 {
+    //Decrypt Digest with Sender's Public Key
     long int pt, ct, key = d[0];
     i = 0;
-    while (en[i] != -1)
+    while (en_MAC[i] != -1)
     {
-        ct = temp[i];
+        ct = temp_MAC[i];
         k = 1;
         for (j = 0; j < key; j++)
         {
@@ -115,9 +121,61 @@ void RSADecrypt()
             k = k % n;
         }
         pt = k + 96;
-        de[i] = pt;
+        de_MAC[i] = pt;
         i++;
     }
-    de[i] = -1;
-    MDPrint(de);
+    de_MAC[i] = -1;
+    MDPrint(de_MAC);
+}
+/* Key RSA Encryption */
+void Key_RSAEncrypt(int len)
+{
+    //Encrypt SDES Key with Receiver's Public Key
+    long int pt, ct, key = d[1];
+    i = 0;
+    while (i != len)
+    {
+        pt = keys[i / 8][i % 8];
+        pt = pt + 96;
+        k = 1;
+        for (j = 0; j < key; j++)
+        {
+            k = k * pt;
+            k = k % n;
+        }
+        temp_Key[i] = k;
+        ct = k + 96;
+        en_Key[i] = ct;
+        i++;
+    }
+    en_Key[i] = -1;
+    for (i = 0; i < KEY_LEN - 1; i++) {
+        printf("%ld", en_Key[i]);
+    }
+    printf("\n");
+}
+/* Key RSA Decryption */
+void Key_RSADecrypt()
+{
+    //Decrypt SDES Key with Receiver's Private Key
+    long int pt, ct, key = e[1];
+    i = 0;
+    while (en_Key[i] != -1)
+    {
+        ct = temp_Key[i];
+        k = 1;
+        for (j = 0; j < key; j++)
+        {
+            k = k * ct;
+            k = k % n;
+        }
+        pt = k - 96;
+        de_Key[i] = pt;
+        i++;
+    }
+    de_Key[i] = -1;
+    for (i = 0; i < KEY_LEN - 1; i++) {
+        printf("%d", de_Key[i]);
+    }
+    printf("\n");
 }

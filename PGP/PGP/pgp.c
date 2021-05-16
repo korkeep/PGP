@@ -13,6 +13,8 @@
 
 #define MAX_LEN 1024 //Max Text Length
 #define DIGEST_LEN 16 //Digest Length
+#define SDES_KEY_LEN 16 //SDES Key length (8*2)
+#define RSA_LEN 128 //RSA Output Length
 
 int main() {
 	
@@ -85,9 +87,9 @@ int main() {
 		printf("Error: Input is not validate\n");
 		exit(1);
 	}
-	//Copy Digest to de
+	//Copy Digest to de_MAC
 	for (int i = 0; i < DIGEST_LEN; i++) {
-		de[i] = digest[i];
+		de_MAC[i] = digest[i];
 	}
 	//Calculate n, t
 	n = p * q;
@@ -104,49 +106,77 @@ int main() {
 	printf("MD5 Digest: ");
 	MDPrint(digest);
 	printf("Encrypted Digest: ");
-	RSAEncrypt(DIGEST_LEN);
+	MAC_RSAEncrypt(DIGEST_LEN);
 	printf("\n");
 	
 	//Step 4: Concat Origin Content & Encrypted MAC
 	printf("# Step 4: Concat Origin Content & Encrypted MAC\n");
 	// ¡Ø Since the MAC's type is different, Output looks like broken. (hex ¡æ string) ¡Ø //
 	strcat(text, "||"); //Concat Flag = "||"
-	strcat(text, en); //Append Encrypted MAC
+	strcat(text, en_MAC); //Append Encrypted MAC
 	printf("%s", text);
 	printf("\n\n");
 
 	//Step 5: Encrypt Concatated Data with Symmetric Key
 	//Inputs: Binary Format
 	printf("# Step 5: Encrypt Concatated Data with Symmetric Key\n");
-	//8-Bits Plain Text ¡æ Ex) 1 0 0 0 1 0 1 1
-	int pt[8] = { 0 };
-	printf(">> Enter plain text binary bits: ");
-	for (i = 0; i < 8; i++) {
-		scanf("%d", &pt[i]);
-	}
-	//10-Bits Key ¡æ Ex) 0 0 0 0 0 1 1 0 1 1
+	//Generate 10-Bits SDES Key ¡æ Ex) 0 0 0 0 0 1 1 0 1 1
 	gen_keys();
-	
-	//Encrypt
-	SDES(pt, 0);
+	//Encrypt Data
+	int pt[8] = { 0 };
+	int sdes_text[MAX_LEN][8] = { pt };
 	printf("Cipher Text: ");
-	for (i = 0; i < 8; i++)
-		printf("%d", ct[i]);
+	for (int idx = 0; idx < MAX_LEN; idx++) {
+		if (text[idx] == NULL) break;
+		//Character to Binary
+		for (int i = 7; i >= 0; i--) {
+			pt[7 - i] = ((text[idx] & (1 << i)) ? '1' : '0') - 48; //ASCII '0' = 48
+		}
+		//Encrypt Data using SDES
+		SDES(pt, 0);
+		for (i = 0; i < 8; i++) {
+			sdes_text[idx][i] = ct[i];
+			printf("%d", sdes_text[idx][i]);
+		}
+		printf(" ");
+	}
+	printf("\n\n");
 
-	//Decrypt
-	SDES(ct, 1);
+	//Step 6: Encrypt Symmetric Key with Receiver Public Key
+	printf("# Step 6: Encrypt Symmetric Key with Receiver Public Key\n");
+	//Encrypt SDES Key with Receiver's Public Key
+	printf("Encrypted SDES Key (Key1 + Key2): ");
+	Key_RSAEncrypt(SDES_KEY_LEN); 
+
+
+
+
+	printf("\n\n\n");
+	printf("Decrypted SDES Key (Key1 + Key2): ");
+	Key_RSADecrypt();
+
+	printf("\n\n\n");
+	//Decrypt Data
 	printf("Plain Text: ");
-	for (i = 0; i < 8; i++)
-		printf("%d", ct[i]);
-
-
-
-
+	for (int idx = 0; idx < MAX_LEN; idx++) {
+		if (text[idx] == NULL) break;
+		//Put Encrypted Data into ct
+		for (i = 0; i < 8; i++) {
+			ct[i] = sdes_text[idx][i];
+		}
+		//Decrypt Data using SDES
+		SDES(ct, 1);
+		for (i = 0; i < 8; i++) {
+			printf("%d", ct[i]);
+		}
+		printf(" ");
+	}
+	printf("\n");
 
 	//RSA Decryption
 	printf("\n\n\n\n");
 	printf("Decrypted Digest: ");
-	RSADecrypt();
+	MAC_RSADecrypt();
 
 	/*md5 test*/
 	/*
@@ -184,7 +214,7 @@ int main() {
     scanf("%s", msg);
 
     for (i = 0; msg[i] != NULL; i++)
-        de[i] = msg[i];
+        de_MAC[i] = msg[i];
     n = p * q;
     t = (p - 1) * (q - 1);
     calc_E();

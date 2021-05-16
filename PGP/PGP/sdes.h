@@ -75,7 +75,7 @@ void gen_keys()
 	int p10[] = { 3, 5, 2, 7, 4, 10, 1, 9, 8, 6 }, p8[] = { 6, 3, 7, 4, 8, 5, 10, 9 };
 	
 	// Get Key Input
-	printf(">> Enter Key :");
+	printf(">> Enter Key(10-bits): ");
 	for (i = 0; i < 10; i++) {
 		scanf("%d", &key[i]);
 	}
@@ -121,8 +121,6 @@ void SDES(int pt[], int c)
 	func_K(c);				//Round 0+1 using key 0+1
 	for (i = 0; i < 4; i++) //Swapping left & right
 		r[i] = l[i] + r[i], l[i] = r[i] - l[i], r[i] = r[i] - l[i];
-	
-	printf("\n\n");
 	
 	func_K(!c); // Round 1+1 wid key1+1 wid swapped bits
 	for (i = 0; i < 8; i++)
