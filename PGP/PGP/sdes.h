@@ -15,7 +15,6 @@ int l[4], r[4], keys[2][8], ct[8];
 
 /* SBOX */
 void SBOX(int sip[], int p[], int sbno, int i)
-
 {
 	int sbox[2][4][4] = { 1, 0, 3, 2, 3, 2, 1, 0, 0, 2, 1, 3, 3, 1, 3, 2, 0, 1, 2, 3, 2, 0, 1, 3, 3, 0, 1, 0, 2, 1, 0, 3 };
 	int rw, c, sop;
@@ -28,7 +27,6 @@ void SBOX(int sip[], int p[], int sbno, int i)
 
 /* DES Algorithm */
 void func_K(int round)
-
 {
 	int EP[] = { 4, 1, 2, 3, 2, 3, 4, 1 }, i, epd[8];
 	int slip[4], srip[4];
@@ -76,28 +74,37 @@ void gen_keys()
 	int key[10], i, keyip[10];
 	int p10[] = { 3, 5, 2, 7, 4, 10, 1, 9, 8, 6 }, p8[] = { 6, 3, 7, 4, 8, 5, 10, 9 };
 	
-	printf("Enter Key :");
-	for (i = 0; i < 10; i++)
+	// Get Key Input
+	printf(">> Enter Key :");
+	for (i = 0; i < 10; i++) {
 		scanf("%d", &key[i]);
+	}
 	
-	for (i = 0; i < 10; i++) // Permutation P10
+	// Permutation P10
+	for (i = 0; i < 10; i++) {
 		keyip[i] = key[p10[i] - 1];
+	}
 	
-	left_shift(keyip, 1); // Left Shifting (Array,No of bts)
-	printf("\nKey1 :");
+	// Generating Key1
+	left_shift(keyip, 1); // Left Shifting
+	printf("+ Key1 : ");
+	//Permuting P8 on key1
 	for (i = 0; i < 8; i++)
-	{								   //Permuting P8 on key1
+	{
 		keys[0][i] = keyip[p8[i] - 1]; // Key1 Generated!!
 		printf("%d", keys[0][i]);
 	}
-
-	left_shift(keyip, 2); // Generating Key2 . .
-	printf("\nKey2 :");
+	printf("\n");
+	
+	// Generating Key2
+	left_shift(keyip, 2); // Left Shifting
+	printf("+ Key2 : ");
 	for (i = 0; i < 8; i++)
 	{
 		keys[1][i] = keyip[p8[i] - 1]; // Key2 Generated!!
 		printf("%d", keys[1][i]);
 	}
+	printf("\n");
 }
 
 /* Encryption, Decryption */

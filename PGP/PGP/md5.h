@@ -336,8 +336,6 @@ static void MDString(char* string)
     MD5Init(&context);
     MD5Update(&context, (unsigned char*)string, len);
     MD5Final(digest, &context);
-
-    printf("MD5 (\"%s\") = ", string);
     MDPrint(digest);
     printf("\n");
 }
@@ -421,8 +419,8 @@ static void MDFilter()
 /* Prints a message digest in hexadecimal. */
 static void MDPrint(unsigned char digest[16])
 {
-    unsigned int i;
-
-    for (i = 0; i < 16; i++)
+    for (unsigned int i = 0; i < 16; i++) {
         printf("%02x", digest[i]);
+    }
+    printf("\n");
 }

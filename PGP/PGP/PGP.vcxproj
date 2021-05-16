@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.c" />
+    <ClCompile Include="pgp.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="md5.h" />

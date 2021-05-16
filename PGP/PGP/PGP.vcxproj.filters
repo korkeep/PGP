@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.c">
+    <ClCompile Include="pgp.c">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
