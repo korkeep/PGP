@@ -11,8 +11,8 @@
 #include "sdes.h"
 #include <string.h>
 
-#define MAX_LEN 512 //Max Text Length
-#define MID_LEN 64 //Mid Text Length
+#define MAX_LEN 2048 //Max Text Length
+#define MID_LEN 1024 //Mid Text Length
 #define DIGEST_LEN 16 //Digest Length
 #define SDES_KEY_LEN 10 //SDES Key length
 
@@ -109,8 +109,9 @@ int main() {
 	printf("\n");
 	
 	//Step 4: Concat Origin Content & Encrypted MAC
-	printf("# Step 4: Concat Origin Content & Encrypted MAC\n");
+	// +++++++++++++++++++++++++++++++++++ Notice ++++++++++++++++++++++++++++++++++++ //
 	// ¡Ø Since the MAC's type is different, Output looks like broken. (hex ¡æ string) ¡Ø //
+	printf("# Step 4: Concat Origin Content & Encrypted MAC\n");
 	strcat(text, "||"); //Concat Flag = "||"
 	strcat(text, en_MAC); //Append Encrypted MAC
 	printf("%s", text);
@@ -124,7 +125,7 @@ int main() {
 	//Encrypt Data
 	int pt[8] = { 0 };
 	int sdes_text[MAX_LEN][8] = { pt };
-	printf("Cipher Text: ");
+	printf("Encrypted Binary Text: ");
 	for (int idx = 0; idx < MAX_LEN; idx++) {
 		if (text[idx] == NULL) break;
 		//Character to Binary
@@ -143,12 +144,13 @@ int main() {
 	//Step 6: Encrypt Symmetric Key with Receiver Public Key
 	printf("# Step 6: Encrypt Symmetric Key with Receiver Public Key\n");
 	//Encrypt SDES Key with Receiver's Public Key
-	printf("Encrypted SDES Key (10-bits): ");
+	printf("Encrypted Symmetric Key (10-bits): ");
 	Key_RSAEncrypt(SDES_KEY_LEN); 
 	printf("\n");
 
 	//Step 7: Concat Encrypted Data & Write EText.txt
 	printf("# Step 7: Concat Encrypted Data & Write EText.txt\n");
+	printf("Encrypted Binary Text || Encrypted Symmetric Key: ");
 	int sdes_key[SDES_KEY_LEN] = { 0 };
 	//Open EText.txt as WRITE option
 	FILE* fp_w = fopen("EText.txt", "w");
@@ -180,7 +182,7 @@ int main() {
 	PGP Receiving mode
 	# Step 1: Read EText.txt
 	# Step 2: Decrypt Symmetric Key with Receiver Private Key
-	# Step 3: Decrypt Dencrypted Data with Symmetric Key
+	# Step 3: Decrypt Encrypted Data with Symmetric Key
 	# Step 4: Decrypt MAC with Sender Public Key
 	# Step 5: Hash Origin Data
 	# Step 6: Compare MAC with Hashed Data
@@ -194,6 +196,7 @@ int main() {
 	printf("# Step 1: Read EText.txt\n");
 	char etext[MAX_LEN] = "";
 	char ekey[MID_LEN] = "";
+	//text[0] = '\0';
 	int flag = -1;
 	char c = '|';
 	//Open Text.txt as READ option
@@ -225,20 +228,39 @@ int main() {
 			strcat(ekey, temp_s);
 		}
 	}
-	printf("EText: %s\n", etext);
-	printf("EKey: %s\n", ekey);
+	printf("Encrypted Binary Text: %s\n", etext);
+	printf("Encrypted Symmetric Key: %s\n", ekey);
 	printf("\n");
 	fclose(fp_r);
 
 	//Step 2: Decrypt Symmetric Key with Receiver Private Key
 	printf("# Step 2: Decrypt Symmetric Key with Receiver Private Key\n");
-	printf("Decrypted SDES Key (Key1 + Key2): ");
-	Key_RSADecrypt();
+	printf("Decrypted SDES Key (10-bits): ");
+	Key_RSADecrypt(ekey);
+	printf("\n");
+
+	//Step 3: Decrypt Encrypted Data with Symmetric Key
+	printf("# Step 3: Decrypt Encrypted Data with Symmetric Key\n");
+	//Decrypt Data
+	printf("Decrypted Binary Text: ");
+	for (int idx = 0; idx < MAX_LEN; ) {
+		if (etext[idx] == NULL) break;
+		//Put Encrypted Data into ct
+		for (i = 0; i < 8; i++, idx++){
+			ct[i] = etext[idx] - 48; //ASCII '0' = 48
+		}
+		//Decrypt Data using SDES
+		SDES(ct, 1);
+		for (i = 0; i < 8; i++) {
+			printf("%d", ct[i]);
+		}
+	}
+	printf("\n");
 
 
 
 
-
+	/*
 	printf("\n\n\n");
 	//Decrypt Data
 	printf("Plain Text: ");
@@ -254,7 +276,9 @@ int main() {
 			printf("%d", ct[i]);
 		}
 	}
-	printf("\n");
+	printf("\n");*/
+	
+
 
 	//RSA Decryption
 	printf("\n\n\n\n");

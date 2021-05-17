@@ -30,7 +30,7 @@ long int calc_D(long int); /* Calculate D */
 void MAC_RSAEncrypt(int); /* MAC RSA Encryption */
 void MAC_RSADecrypt(); /* MAC RSA Decryption */
 void Key_RSAEncrypt(int); /* Key RSA Encryption */
-void Key_RSADecrypt(); /* Key RSA Decryption */
+void Key_RSADecrypt(const char*); /* Key RSA Decryption */
 
 /* Check if input is Prime */
 int isPrime(long int pr)
@@ -155,12 +155,12 @@ void Key_RSAEncrypt(int len)
     printf("\n");
 }
 /* Key RSA Decryption */
-void Key_RSADecrypt()
+void Key_RSADecrypt(const char* ekey)
 {
     //Decrypt SDES Key with Receiver's Private Key
     long int pt, ct, key = e[1];
     i = 0;
-    while (en_Key[i] != -1)
+    while (i < strlen(ekey))
     {
         ct = temp_Key[i];
         k = 1;
