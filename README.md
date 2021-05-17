@@ -28,7 +28,7 @@ Visual Studio 2019 기반으로 코드를 완성했고, **PGP** 동작 과정을
 - Step 6: Hash Plain Text Data & Compare with MAC
 - Step 7: Write DText.txt
 
-### ※ Visual Studio 에서 실행 시 에러가 난다면? 🤔
+### Visual Studio 에서 실행 시 에러가 난다면? 🤔
 Buffer Overflow 취약점이 있는 함수를 사용해서 에러가 발생합니다. T.T  
 프로젝트 우측 클릭 > 속성 > C/C++ > 전처리기 > 전처리기 정의 항목에서,  
 *;_CRT_SECURE_NO_WARNINGS* 를 추가하시면 해결됩니다 :)  
