@@ -1,7 +1,7 @@
 # PGP
 **Pretty Good Privacy**의 약자로, 컴퓨터 파일을 암호화하고 복호화하는 프로그램입니다.  
 Visual Studio 2019 기반으로 코드를 완성했고, **PGP** 동작 과정을 콘솔에 표현했습니다.  
-사용자 입력은 [PGP Transmission Mode](https://github.com/korkeep/PGP#pgp-transmission-mode)의 *Step 3*  단계에서 RSA key를 생성할 때 한 번 필요합니다.  
+[PGP Transmission Mode](https://github.com/korkeep/PGP#pgp-transmission-mode)의 *Step 3*  단계에서 RSA key를 생성할 때, 사용자 입력이 필요합니다.  
 
 ## Crypto Algorithm
 | Algorithm | Description |
