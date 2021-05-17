@@ -7,7 +7,7 @@ Visual Studio 2019 기반으로 코드를 완성했고, **PGP** 동작 과정을
 | Algorithm | Description |
 | --- | --- |
 | SDES | Symmetric Key Algorithm |
-| RSA | Public Key Algorithm |
+| RSA | Public/Private Key Algorithm |
 | MD5 | Hash Digest Algorithm |
 
 ## PGP Transmission mode
