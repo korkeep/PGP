@@ -154,6 +154,11 @@ int main() {
 	int sdes_key[SDES_KEY_LEN] = { 0 };
 	//Open EText.txt as WRITE option
 	FILE* fp_w = fopen("EText.txt", "w");
+	//File open error
+	if (fp_w == NULL) {
+		fprintf(stdout, "Error: Unable to Open File EText.txt\n");
+		exit(1);
+	}
 	for (int idx = 0; idx < MAX_LEN; idx++) {
 		if (text[idx] == NULL) {
 			//Concat Flag = "||"
@@ -184,8 +189,8 @@ int main() {
 	# Step 2: Decrypt Symmetric Key with Receiver Private Key
 	# Step 3: Decrypt Encrypted Data with Symmetric Key
 	# Step 4: Decrypt MAC with Sender Public Key
-	# Step 5: Hash Origin Data
-	# Step 6: Compare MAC with Hashed Data
+	# Step 5: Parse Plain Text Data
+	# Step 6: Hash Plain Text Data & Compare with MAC
 	# Step 7: Write DText.txt
 	*/
 
@@ -241,6 +246,8 @@ int main() {
 
 	//Step 3: Decrypt Encrypted Data with Symmetric Key
 	printf("# Step 3: Decrypt Encrypted Data with Symmetric Key\n");
+	char dtext[MAX_LEN] = "";
+	char temp_c[2] = "";
 	//Decrypt Data
 	printf("Decrypted Binary Text: ");
 	for (int idx = 0; idx < MAX_LEN; ) {
@@ -251,113 +258,113 @@ int main() {
 		}
 		//Decrypt Data using SDES
 		SDES(ct, 1);
+		temp_c[0] = 0;
+		temp_c[1] = '\0';
 		for (i = 0; i < 8; i++) {
 			printf("%d", ct[i]);
+			switch (i) {
+			case 0:
+				temp_c[0] = temp_c[0] + ct[i] * 128;
+				break;
+			case 1:
+				temp_c[0] = temp_c[0] + ct[i] * 64;
+				break;
+			case 2:
+				temp_c[0] = temp_c[0] + ct[i] * 32;
+				break;
+			case 3:
+				temp_c[0] = temp_c[0]  + ct[i] * 16;
+				break;
+			case 4:
+				temp_c[0] = temp_c[0] + ct[i] * 8;
+				break;
+			case 5:
+				temp_c[0] = temp_c[0] + ct[i] * 4;
+				break;
+			case 6:
+				temp_c[0] = temp_c[0] + ct[i] * 2;
+				break;
+			case 7:
+				temp_c[0] = temp_c[0] + ct[i] * 1;
+				break;
+			}
 		}
+		strcat(dtext, temp_c);
 	}
-	printf("\n");
+	printf("\nDecrypted Plain Text: \n");
+	printf("%s", dtext);
+	printf("\n\n");
 
-
-
-
-	/*
-	printf("\n\n\n");
-	//Decrypt Data
-	printf("Plain Text: ");
-	for (int idx = 0; idx < MAX_LEN; idx++) {
-		if (text[idx] == NULL) break;
-		//Put Encrypted Data into ct
-		for (i = 0; i < 8; i++) {
-			ct[i] = sdes_text[idx][i];
-		}
-		//Decrypt Data using SDES
-		SDES(ct, 1);
-		for (i = 0; i < 8; i++) {
-			printf("%d", ct[i]);
-		}
-	}
-	printf("\n");*/
-	
-
-
-	//RSA Decryption
-	printf("\n\n\n\n");
+	// Step 4: Decrypt MAC with Sender Public Key
+	printf("# Step 4: Decrypt MAC with Sender Public Key\n");
 	printf("Decrypted Digest: ");
 	MAC_RSADecrypt();
-
-	/*md5 test*/
-	/*
-	char a[100] = "testing123";
-
-	MDString(a);
 	printf("\n");
-	MDFile("a.txt");
-	*/
 
-	/*rsa test*/
-	/*
-    printf("* Enter first prime number\n");
-    scanf("%d", &p);
-   
-    flag = isPrime(p);
-    if (flag == 0)
-    {
-        printf("\nWRONG INPUT\n");
-        exit(1);
-    }
-
-    printf("\nENTER ANOTHER Prime NUMBER\n");
-    scanf("%d", &q);
-    
-	flag = isPrime(q);
-    if (flag == 0 || p == q)
-    {
-        printf("\nWRONG INPUT\n");
-        exit(1);
-    }
-
-    printf("\nENTER MESSAGE\n");
-    fflush(stdin);
-    scanf("%s", msg);
-
-    for (i = 0; msg[i] != NULL; i++)
-        de_MAC[i] = msg[i];
-    n = p * q;
-    t = (p - 1) * (q - 1);
-    calc_E();
-
-    printf("\nPOSSIBLE VALUES OF e AND d ARE\n");
-    for (i = 0; i < j - 1; i++)
-        printf("\n%ld\t%ld", e[i], d[i]);
-
-    RSAEncrypt();
-    RSADecrypt();*/
+	// Step 5: Parse Plain Text Data
+	printf("# Step 5: Parse Plain Text Data\n");
+	char parse[2][MAX_LEN];
+	char* temp;
+	temp = strtok(dtext, "||");
+	i = 0;
+	//Parse Plain Text(parse[0]) & MAC(parse[1])
+	while (temp != NULL) {
+		strcpy(parse[i++], temp);
+		temp = strtok(NULL, "||");
+	}
+	printf("Parsed Plain Text: \n");
+	printf("%s\n\n", parse[0]);
 	
+	//Step 6: Hash Plain Text Data & Compare with Digest
+	printf("# Step 6: Hash Plain Text Data & Compare with Digest\n");
+	//Message Digest
+	int auth = 1; //Authentication Flag
+	char new_digest[DIGEST_LEN];
+	//Message Digest using MD5
+	MD5Init(&context);
+	MD5Update(&context, (unsigned char*)parse[0], strlen(parse[0]));
+	MD5Final(new_digest, &context);
+	//Prints the Result
+	printf("Old MD5 Digest: ");
+	MDPrint(de_MAC); // From rsa.h
+	printf("New MD5 Digest: ");
+	MDPrint(new_digest);
+	//Compare Hashed Result with Original Digest
+	for (int i = 0; i < DIGEST_LEN; i++) {
+		if (de_MAC[i] != new_digest[i]) {
+			printf("『『『 Authentication Result: Failed 『『『\n");
+			auth = 0;
+			break;
+		}
+	}
+	if(auth == 1) {
+		printf("『『『 Authentication Result: Success 『『『\n");
+	}
+	printf("\n");
 
-	/* sdes test */
-	//Inputs: Binary Format
-	//8-Bits Plain Text: 1 0 0 0 1 0 1 1
-	//10-Bits Key : 0 0 0 0 0 1 1 0 1 1
-	/*
-	int pt[8] = { 0 }, i;
-	printf("Enter plain text binary bits:");
-
-	for (i = 0; i < 8; i++)
-		scanf("%d", &pt[i]);
-
-	gen_keys(); // Generating Keys key1 & key2
-
-	SDES(pt, 0);
-	printf("\nCipher Text :");
-	for (i = 0; i < 8; i++)
-		printf("%d", ct[i]);
-	
-	//Decrypting - - -
-	SDES(ct, 1);
-	printf("\nPlain Text (After Decrypting):");
-	for (i = 0; i < 8; i++)
-		printf("%d", ct[i]);
-	*/
+	// Step 7: Write DText.txt
+	printf("# Step 7: Write DText.txt\n");
+	//Open DText.txt as WRITE option
+	fp_w = fopen("DText.txt", "w");
+	//File open error
+	if (fp_w == NULL) {
+		fprintf(stdout, "Error: Unable to Open File DText.txt\n");
+		exit(1);
+	}
+	//Wirte Plain Test to DText.txt
+	fputs("Plain Text: \n", fp_w);
+	fputs(parse[0], fp_w);
+	fputs("\n\n", fp_w);
+	//Wirte MD5 Digest to DText.txt
+	// +++++++++++++++++++++++++++++++++++ Notice ++++++++++++++++++++++++++++++++++++ //
+	// 『 Since the MAC's type is different, Output looks like broken. (hex ≧ string) 『 //
+	fputs("MD5 Digest: \n", fp_w);
+	for (int i = 0; i < 16; i++) {
+		fprintf(fp_w, "%c", parse[1][i]);
+	}
+	printf("DText.txt Wirte Success\n");
+	fclose(fp_w);
+	printf("\n\n");
 
 	return 0;
 }
