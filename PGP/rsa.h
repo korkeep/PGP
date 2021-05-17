@@ -16,7 +16,7 @@
 #include "sdes.h"
 
 #define MAC_LEN 17 //MAC Length = 16(Digest Length) + 1(Flag)
-#define KEY_LEN 17 //KEY Length = 8*2(2 Key Length ) + 1(Flag)
+#define KEY_LEN 11 //KEY Length = 10(Key Length) + 1(Flag)
 
 /* Global Variable */
 long int p, q, n, t, flag, i, j, k;
@@ -135,8 +135,8 @@ void Key_RSAEncrypt(int len)
     i = 0;
     while (i != len)
     {
-        pt = keys[i / 8][i % 8];
-        pt = pt + 96;
+        pt = sdes_key[i];
+        pt = pt - 96;
         k = 1;
         for (j = 0; j < key; j++)
         {
@@ -150,7 +150,7 @@ void Key_RSAEncrypt(int len)
     }
     en_Key[i] = -1;
     for (i = 0; i < KEY_LEN - 1; i++) {
-        printf("%ld", en_Key[i]);
+        printf("%d", en_Key[i]);
     }
     printf("\n");
 }
@@ -169,7 +169,7 @@ void Key_RSADecrypt()
             k = k * ct;
             k = k % n;
         }
-        pt = k - 96;
+        pt = k + 96;
         de_Key[i] = pt;
         i++;
     }

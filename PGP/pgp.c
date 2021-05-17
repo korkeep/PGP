@@ -11,10 +11,10 @@
 #include "sdes.h"
 #include <string.h>
 
-#define MAX_LEN 1024 //Max Text Length
+#define MAX_LEN 512 //Max Text Length
+#define MID_LEN 64 //Mid Text Length
 #define DIGEST_LEN 16 //Digest Length
-#define SDES_KEY_LEN 16 //SDES Key length (8*2)
-#define RSA_LEN 128 //RSA Output Length
+#define SDES_KEY_LEN 10 //SDES Key length
 
 int main() {
 	
@@ -26,8 +26,7 @@ int main() {
 	# Step 4: Concat Origin Content & Encrypted MAC
 	# Step 5: Encrypt Concatated Data with Symmetric Key
 	# Step 6: Encrypt Symmetric Key with Receiver Public Key
-	# Step 7: Concat Encrypted Data & Encrypted Symmetric Key
-	# Step 8: Write EText.txt
+	# Step 7: Concat Encrypted Data & Write EText.txt
 	*/
 
 	//PGP Transmission mode
@@ -38,20 +37,20 @@ int main() {
 	char text[MAX_LEN] = "";
 	char temp_s[2];
 	//Open Text.txt as READ option
-	FILE* fp = fopen("Text.txt", "r");
+	FILE* fp_r = fopen("Text.txt", "r");
 	//File open error
-	if (fp == NULL) {
+	if (fp_r == NULL) {
 		fprintf(stdout, "Error: Unable to find Text.txt\n");
 		exit(1);
 	}
 	//READ Text.txt
-	while (feof(fp) == 0) {
-		temp_s[0] = fgetc(fp);
+	while (feof(fp_r) == 0) {
+		temp_s[0] = fgetc(fp_r);
 		temp_s[1] = '\0';
 		strcat(text, temp_s);
 	}
 	printf("%s\n\n", text);
-	fclose(fp);
+	fclose(fp_r);
 
 	//Step 2: Message Digest using MD5 Algorithm
 	printf("# Step 2: Message Digest using MD5 Algorithm\n");
@@ -120,7 +119,7 @@ int main() {
 	//Step 5: Encrypt Concatated Data with Symmetric Key
 	//Inputs: Binary Format
 	printf("# Step 5: Encrypt Concatated Data with Symmetric Key\n");
-	//Generate 10-Bits SDES Key ¡æ Ex) 0 0 0 0 0 1 1 0 1 1
+	//Generate 10-Bits SDES Key Randomly
 	gen_keys();
 	//Encrypt Data
 	int pt[8] = { 0 };
@@ -138,48 +137,107 @@ int main() {
 			sdes_text[idx][i] = ct[i];
 			printf("%d", sdes_text[idx][i]);
 		}
-		printf(" ");
 	}
 	printf("\n\n");
 
 	//Step 6: Encrypt Symmetric Key with Receiver Public Key
 	printf("# Step 6: Encrypt Symmetric Key with Receiver Public Key\n");
 	//Encrypt SDES Key with Receiver's Public Key
-	printf("Encrypted SDES Key (Key1 + Key2): ");
+	printf("Encrypted SDES Key (10-bits): ");
 	Key_RSAEncrypt(SDES_KEY_LEN); 
 	printf("\n");
 
-	//Step 7: Concat Encrypted Data & Encrypted Symmetric Key
-	printf("# Step 7: Concat Encrypted Data & Encrypted Symmetric Key\n");
+	//Step 7: Concat Encrypted Data & Write EText.txt
+	printf("# Step 7: Concat Encrypted Data & Write EText.txt\n");
+	int sdes_key[SDES_KEY_LEN] = { 0 };
+	//Open EText.txt as WRITE option
+	FILE* fp_w = fopen("EText.txt", "w");
 	for (int idx = 0; idx < MAX_LEN; idx++) {
 		if (text[idx] == NULL) {
-			//Concat Encrypted Key1
-			for (int i = 0; i < 8; i++) {
-				sdes_text[idx][i] = en_Key[i];
-				printf("%d", sdes_text[idx][i]);
-			}
-			printf(" ");
-			//Concat Encrypted Key2
-			for (int i = 8; i < 16; i++) {
-				sdes_text[idx + 1][i - 8] = en_Key[i];
-				printf("%d", sdes_text[idx + 1][i - 8]);
+			//Concat Flag = "||"
+			fputs("||", fp_w);
+			printf("||");
+			//Concat Encrypted Key
+			for (int i = 0; i < 10; i++) {
+				sdes_key[i] = en_Key[i];
+				printf("%d", sdes_key[i]);
+				fprintf(fp_w, "%d", sdes_key[i]);
 			}
 			break;
 		}
 		else {
 			for (i = 0; i < 8; i++) {
 				printf("%d", sdes_text[idx][i]);
+				fprintf(fp_w, "%d", sdes_text[idx][i]);
 			}
-			printf(" ");
 		}
 	}
-	printf("\n\n");
-
-
-
+	fclose(fp_w);
 	printf("\n\n\n");
+
+
+	/*
+	PGP Receiving mode
+	# Step 1: Read EText.txt
+	# Step 2: Decrypt Symmetric Key with Receiver Private Key
+	# Step 3: Decrypt Dencrypted Data with Symmetric Key
+	# Step 4: Decrypt MAC with Sender Public Key
+	# Step 5: Hash Origin Data
+	# Step 6: Compare MAC with Hashed Data
+	# Step 7: Write DText.txt
+	*/
+
+	//PGP Receiving mode
+	printf("### PGP Receiving Mode ###\n\n");
+
+	//Step 1: Read EText.txt
+	printf("# Step 1: Read EText.txt\n");
+	char etext[MAX_LEN] = "";
+	char ekey[MID_LEN] = "";
+	int flag = -1;
+	char c = '|';
+	//Open Text.txt as READ option
+	fp_r = fopen("EText.txt", "r");
+	//File open error
+	if (fp_r == NULL) {
+		fprintf(stdout, "Error: Unable to find EText.txt\n");
+		exit(1);
+	}
+	//READ EText.txt
+	while (feof(fp_r) == 0) {
+		temp_s[0] = fgetc(fp_r);
+		temp_s[1] = '\0';
+		//Concat Flag = "||"
+		if (temp_s[0] == c) {
+			temp_s[0] = fgetc(fp_r);
+			temp_s[1] = '\0';
+			if (temp_s[0] == c) {
+				flag = 0;
+				continue;
+			}
+		}
+		//etext
+		if (flag == -1) {
+			strcat(etext, temp_s);
+		}
+		//ekey
+		else {
+			strcat(ekey, temp_s);
+		}
+	}
+	printf("EText: %s\n", etext);
+	printf("EKey: %s\n", ekey);
+	printf("\n");
+	fclose(fp_r);
+
+	//Step 2: Decrypt Symmetric Key with Receiver Private Key
+	printf("# Step 2: Decrypt Symmetric Key with Receiver Private Key\n");
 	printf("Decrypted SDES Key (Key1 + Key2): ");
 	Key_RSADecrypt();
+
+
+
+
 
 	printf("\n\n\n");
 	//Decrypt Data
@@ -195,7 +253,6 @@ int main() {
 		for (i = 0; i < 8; i++) {
 			printf("%d", ct[i]);
 		}
-		printf(" ");
 	}
 	printf("\n");
 
@@ -276,17 +333,6 @@ int main() {
 	printf("\nPlain Text (After Decrypting):");
 	for (i = 0; i < 8; i++)
 		printf("%d", ct[i]);
-	*/
-
-	/*
-	PGP Receiving mode
-	# Step 1: Read EText.txt
-	# Step 2: Decrypt Symmetric Key with Receiver Private Key
-	# Step 3: Decrypt Dencrypted Data with Symmetric Key
-	# Step 4: Decrypt MAC with Sender Public Key
-	# Step 5: Hash Origin Data
-	# Step 6: Compare MAC with Hashed Data
-	# Step 7: Write DText.txt
 	*/
 
 	return 0;

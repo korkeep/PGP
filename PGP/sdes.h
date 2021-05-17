@@ -9,9 +9,10 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 
 /* Global Variable */
-int l[4], r[4], keys[2][8], ct[8];
+int l[4], r[4], sdes_key[10], keys[2][8], ct[8];
 
 /* SBOX */
 void SBOX(int sip[], int p[], int sbno, int i)
@@ -71,23 +72,29 @@ void left_shift(int keyip[], int nob)
 /* Generate Key */
 void gen_keys()
 {
-	int key[10], i, keyip[10];
+	int i, keyip[10];
 	int p10[] = { 3, 5, 2, 7, 4, 10, 1, 9, 8, 6 }, p8[] = { 6, 3, 7, 4, 8, 5, 10, 9 };
 	
 	// Get Key Input
-	printf(">> Enter Key(10-bits): ");
+	/*printf(">> Enter Key(10-bits): ");
 	for (i = 0; i < 10; i++) {
 		scanf("%d", &key[i]);
+	}*/
+	printf("+ Random SDES Key(10-bits): ");
+	for (i = 0; i < 10; i++) {
+		sdes_key[i] = rand() % 2;
+		printf("%d", sdes_key[i]);
 	}
+	printf("\n");
 	
 	// Permutation P10
 	for (i = 0; i < 10; i++) {
-		keyip[i] = key[p10[i] - 1];
+		keyip[i] = sdes_key[p10[i] - 1];
 	}
 	
 	// Generating Key1
 	left_shift(keyip, 1); // Left Shifting
-	printf("+ Key1 : ");
+	printf("+ Key1(8-bits): ");
 	//Permuting P8 on key1
 	for (i = 0; i < 8; i++)
 	{
@@ -98,7 +105,7 @@ void gen_keys()
 	
 	// Generating Key2
 	left_shift(keyip, 2); // Left Shifting
-	printf("+ Key2 : ");
+	printf("+ Key2(8-bits): ");
 	for (i = 0; i < 8; i++)
 	{
 		keys[1][i] = keyip[p8[i] - 1]; // Key2 Generated!!
